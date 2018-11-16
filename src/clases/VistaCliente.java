@@ -17,15 +17,12 @@ public class VistaCliente extends javax.swing.JFrame {
 
     DefaultTableModel tabla = new DefaultTableModel();
 
-    int index_actual = 0;
+    ArrayList<Integer> item_selected = new ArrayList();
 
     public VistaCliente() {
         initComponents();
         this.setLocationRelativeTo(null);
         this.setResizable(false);
-        String[] cabecera = new String[]{"ID Cliente", "Nombre", "Apellido", "Telefono", "Dirección"};
-        tabla.setColumnIdentifiers(cabecera);
-        tablaClientes.setModel(tabla);
 
     }
 
@@ -104,6 +101,7 @@ public class VistaCliente extends javax.swing.JFrame {
         botonEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/clienteeliminar2.png"))); // NOI18N
         botonEliminar.setText("ELIMINAR");
         botonEliminar.setContentAreaFilled(false);
+        botonEliminar.setEnabled(false);
         botonEliminar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         botonEliminar.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/images/clienteeliminar2.png"))); // NOI18N
         botonEliminar.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/images/clienteeliminar1.png"))); // NOI18N
@@ -155,21 +153,34 @@ public class VistaCliente extends javax.swing.JFrame {
         tablaClientes.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         tablaClientes.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4", "Title 5"
+                "ID", "Nombre", "Apellido", "Telefono", "Dirección"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tablaClientes.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         tablaClientes.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tablaClientesMouseClicked(evt);
             }
         });
         jScrollPane2.setViewportView(tablaClientes);
+        if (tablaClientes.getColumnModel().getColumnCount() > 0) {
+            tablaClientes.getColumnModel().getColumn(0).setResizable(false);
+            tablaClientes.getColumnModel().getColumn(1).setResizable(false);
+            tablaClientes.getColumnModel().getColumn(2).setResizable(false);
+            tablaClientes.getColumnModel().getColumn(3).setResizable(false);
+            tablaClientes.getColumnModel().getColumn(4).setResizable(false);
+        }
 
         jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 260, 630, 250));
 
@@ -229,11 +240,13 @@ public class VistaCliente extends javax.swing.JFrame {
     }//GEN-LAST:event_botonAgregarActionPerformed
 
     private void botonEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonEliminarActionPerformed
-        if(index_actual >= 0){
-    
-        clientco.delete(index_actual);
-        ListarTodos();
-                
+        if ( mensaje("¿Realmente desea eliminar este cliente "+clientco.getClientes().get(item_selected.get(0)).getNombre()+" ?") ) {
+            clientco.delete(item_selected.get(0));
+            ListarTodos();
+            item_selected.clear();
+        } else {
+            HabilitarComponentes(false);
+            item_selected.clear();
         }
     }//GEN-LAST:event_botonEliminarActionPerformed
 
@@ -243,13 +256,38 @@ public class VistaCliente extends javax.swing.JFrame {
     }//GEN-LAST:event_botonConsultarActionPerformed
 //Aqui selecciono la posicion de la fila de la tabla de Clientes...
     private void tablaClientesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaClientesMouseClicked
-        index_actual = tablaClientes.getSelectedRow();
-        System.out.println(clientco.getClientes().get(index_actual).getNombre());
+        // vaciamos el arrayList 
+        item_selected.clear();
+        // guardamos el indice
+        int index_actual = tablaClientes.getSelectedRow();
+        //el indice lo agregamos el index al array
+        item_selected.add(index_actual);
+        //habilitamos el boton borrar cuando ya tengamos el indice que deseemos eliminar
+        HabilitarComponentes(true);
+        // imprimimos el nombre del item seleccionado
+        System.out.println(clientco.getClientes().get(item_selected.get(0)).getNombre());
+
     }//GEN-LAST:event_tablaClientesMouseClicked
+
+    public boolean mensaje(String mensaje) {
+        boolean opcion;
+        int opc = JOptionPane.showConfirmDialog(null, mensaje);
+
+        if (opc == 0) {
+            opcion = true;
+        } else {
+            opcion = false;
+        }
+        return opcion;
+    }
 
     public void ListarTodos() {
 
         listarClientes((DefaultTableModel) tablaClientes.getModel(), clientco.getClientes());
+    }
+
+    public void HabilitarComponentes(boolean b) {
+        botonEliminar.setEnabled(b);
     }
 
     public void listarClientes(DefaultTableModel tabla, ArrayList<Cliente> arr) {
